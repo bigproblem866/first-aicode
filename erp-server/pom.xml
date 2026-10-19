@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.16</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.erp</groupId>
+    <artifactId>erp-server</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>erp-server</name>
+    <description>ERP 系统后端（模块化单体：单进程 + Maven 多模块分包）</description>
+
+    <modules>
+        <module>erp-common</module>
+        <module>erp-framework</module>
+        <module>erp-modules</module>
+        <module>erp-admin</module>
+    </modules>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- 版本矩阵的唯一真相源：改版本只改这里。
+             全部为 2026-10 从 Maven Central 实测确认存在的版本，详见
+             《ERP系统开发环境设计文档.md》第 3 节。 -->
+        <mybatis-plus.version>3.5.17</mybatis-plus.version>
+        <jjwt.version>0.12.7</jjwt.version>
+        <hutool.version>5.8.48</hutool.version>
+        <!-- 面向 Spring Boot 3.5 的 springdoc 线。不用 knife4j：实测与 Boot 3.5 不兼容，
+             详见 erp-framework/pom.xml 里的说明 -->
+        <springdoc.version>2.8.17</springdoc.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- ============ 内部模块（版本统一由父 POM 管理，子模块不写 version） ============ -->
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-framework</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-system</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-mdm</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-inventory</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.erp</groupId>
+                <artifactId>erp-purchase</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- ============ 第三方 ============ -->
+            <!-- MyBatis-Plus：Spring Boot 3 必须用 -spring-boot3- 后缀的 starter。
+                 用错成 mybatis-plus-boot-starter（那是 Boot 2 的）会启动即失败。 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+            <!-- MyBatis-Plus 3.5.9 起把 JSqlParser 从主包拆了出去，
+                 分页插件（PaginationInnerInterceptor）没有它会在运行时报
+                 NoClassDefFoundError: net/sf/jsqlparser/*。必须显式引入。 -->
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-jsqlparser</artifactId>
+                <version>${mybatis-plus.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+
+            <!-- 接口文档：springdoc 显式钉版本，并排除 knife4j 传递进来的旧 springdoc。
+                 原因见 erp-framework/pom.xml 里的说明。 -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <!--
+              构建前的 JDK 版本检查。
+
+              为什么需要它：这台机器的系统环境变量 JAVA_HOME 指向 JDK 8，
+              而 Maven 读的是 JAVA_HOME。不检查的话，报错会发生在很后面的编译阶段，
+              而且信息很隐晦（比如 "无效的标记: -proc:full" 或
+              "invalid target release: 21"），看不出是 JDK 的问题，
+              排障容易绕远路。
+
+              加上这个检查后，JDK 不对时会在构建最开始就停下来，并直接说明原因。
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-java-version</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,)</version>
+                                    <message>
+                                        ============================================================
+                                        BUILD STOPPED: JDK 21+ required, but Maven is running on another JDK.
+                                        Maven reads JAVA_HOME (NOT PATH). To fix:
+                                          1) Point JAVA_HOME at JDK 21, e.g.
+                                             C:\Program Files\Java\jdk-21.0.12
+                                          2) Reopen the terminal (env vars are not hot-reloaded)
+                                          3) Confirm with: mvn -v   -> should show "Java version: 21.x"
+                                        Or override for a single command:
+                                          JAVA_HOME="C:/Program Files/Java/jdk-21.0.12" mvn clean package -DskipTests
+                                        ------------------------------------------------------------
+                                        （中文说明）本项目需要 JDK 21，但当前 Maven 用的不是它。
+                                        上方的英文提示是同样内容，用 ASCII 写是为了在任何控制台代码页下都不会乱码。
+                                        ============================================================
+                                    </message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <!-- 只写 release，不写 source/target：release 会用 JDK 21 自带的
+                             签名数据，避免编译期误引用到旧 JDK 的类。
+                             Lombok 走普通 classpath 自动发现，不用 annotationProcessorPaths
+                             （本工程只用它一个注解处理器，少一层配置少一个坑）。 -->
+                        <release>${maven.compiler.release}</release>
+                        <parameters>true</parameters>
+                        <!-- 用 -Xlint:-options 消除 JDK 21 下"启用了批注处理"的告警。
+                             ⚠ 特意不用 -proc:full：那个选项 JDK 21 才支持，JDK 8 上会报
+                             "Fatal error compiling: 无效的标记: -proc:full" ——
+                             本来是想消个告警，结果把"JDK 用错了"这个错误的提示
+                             变得更难懂（不加任何选项时，JDK 8 会直接说
+                             "invalid target release: 21"，一眼就能看出问题）。
+                             -Xlint:-options 是 JDK 8 就支持的选项，两边都合法。 -->
+                        <compilerArgs>
+                            <arg>-Xlint:-options</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

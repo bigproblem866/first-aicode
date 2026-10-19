@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  库存台账的原子增减。这两条 SQL 是库存模块并发正确性的全部所在，改动前务必想清并发场景。
+
+  ⚠ 手写 SQL 不会自动带逻辑删除条件；出库条件里显式写了 is_deleted = 0。
+-->
+<mapper namespace="com.erp.inventory.mapper.InvStockMapper">
+
+    <!--
+      入库 UPSERT。
+      唯一键 (warehouse_id, material_id) 冲突时走 UPDATE 累加，因此首次入库能自动建行。
+      冲突分支里把 is_deleted 重置为 0：唯一键不含 is_deleted，若该行曾被逻辑删除仍会命中冲突，
+      此时应当复活它而不是报错。
+    -->
+    <insert id="increaseQty">
+        INSERT INTO inv_stock (warehouse_id, material_id, qty,
+                               create_by, create_time, update_by, update_time, is_deleted)
+        VALUES (#{warehouseId}, #{materialId}, #{qty},
+                #{operator}, NOW(), #{operator}, NOW(), 0)
+        ON DUPLICATE KEY UPDATE qty         = qty + #{qty},
+                                update_by   = #{operator},
+                                update_time = NOW(),
+                                is_deleted  = 0
+    </insert>
+
+    <!--
+      出库原子扣减。
+      qty >= #{qty} 是关键：把「够不够扣」交给数据库在行锁内判断，
+      影响行数为 0 即库存不足，由 Service 抛业务异常整体回滚。
+    -->
+    <update id="decreaseQty">
+        UPDATE inv_stock
+        SET qty         = qty - #{qty},
+            update_by   = #{operator},
+            update_time = NOW()
+        WHERE warehouse_id = #{warehouseId}
+          AND material_id = #{materialId}
+          AND is_deleted = 0
+          AND qty >= #{qty}
+    </update>
+
+</mapper>

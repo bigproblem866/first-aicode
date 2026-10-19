@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  用户相关 SQL。
+
+  ⚠ 手写 SQL 必须自己带 is_deleted = 0：
+  MyBatis-Plus 的逻辑删除只作用于 BaseMapper 的自动方法，
+  自己写的 select 不会自动追加条件。漏了它，被逻辑删除的用户会重新出现在列表里。
+-->
+<mapper namespace="com.erp.system.mapper.SysUserMapper">
+
+    <sql id="selectUserColumns">
+        u.id,
+        u.dept_id,
+        u.username,
+        u.nick_name,
+        u.email,
+        u.phone,
+        u.sex,
+        u.avatar,
+        u.status,
+        u.login_ip,
+        u.login_date,
+        u.remark,
+        u.create_by,
+        u.create_time,
+        u.update_by,
+        u.update_time,
+        d.dept_name AS dept_name
+    </sql>
+
+    <!--
+      用户分页查询。
+      参数是 IPage 时必须作为第一个参数，MyBatis-Plus 的分页插件靠它注入 LIMIT；
+      写成 (query, page) 的顺序会导致分页失效（而且不报错，只是查出全部数据，很隐蔽）。
+    -->
+    <select id="selectUserPage" resultType="com.erp.system.domain.SysUser">
+        SELECT
+        <include refid="selectUserColumns"/>
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON d.id = u.dept_id AND d.is_deleted = 0
+        <where>
+            u.is_deleted = 0
+            <if test="q.username != null and q.username != ''">
+                AND u.username LIKE CONCAT('%', #{q.username}, '%')
+            </if>
+            <if test="q.nickName != null and q.nickName != ''">
+                AND u.nick_name LIKE CONCAT('%', #{q.nickName}, '%')
+            </if>
+            <if test="q.phone != null and q.phone != ''">
+                AND u.phone LIKE CONCAT('%', #{q.phone}, '%')
+            </if>
+            <if test="q.status != null and q.status != ''">
+                AND u.status = #{q.status}
+            </if>
+            <if test="q.deptId != null">
+                <!-- 选中某部门时，连同其所有下级部门的用户一起查出来 -->
+                AND (u.dept_id = #{q.deptId} OR u.dept_id IN (
+                    SELECT id FROM sys_dept
+                    WHERE is_deleted = 0 AND (id = #{q.deptId} OR FIND_IN_SET(#{q.deptId}, ancestors))
+                ))
+            </if>
+        </where>
+        ORDER BY u.id ASC
+    </select>
+
+    <!--
+      登录用的查询：必须带上 u.password。
+      ⚠ 这个字段只在【这一处】查，别的查询一律不带。
+
+      原因：登录时 UserDetailsServiceImpl 要把密码哈希放进 LoginUser，
+      交给 DaoAuthenticationProvider 做 BCrypt 比对。曾经漏了这个字段，
+      结果 password 为 null，比对必然失败 —— 现象是"账号密码都对，却总提示
+      '用户名或密码错误'"，而日志里没有任何异常（只是正常的认证失败），
+      极难定位。SQL 少一列，编译器是发现不了的。
+
+      安全性由实体上的 @JsonProperty(WRITE_ONLY) 保证：它允许读取但不参与序列化，
+      所以即便查出来了也不会漏给前端。
+    -->
+    <select id="selectUserByUsername" resultType="com.erp.system.domain.SysUser">
+        SELECT
+        <include refid="selectUserColumns"/>,
+        u.password
+        FROM sys_user u
+        LEFT JOIN sys_dept d ON d.id = u.dept_id AND d.is_deleted = 0
+        WHERE u.username = #{username}
+          AND u.is_deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="selectRoleKeysByUserId" resultType="java.lang.String">
+        SELECT r.role_key
+        FROM sys_role r
+                 INNER JOIN sys_user_role ur ON ur.role_id = r.id
+        WHERE ur.user_id = #{userId}
+          AND r.is_deleted = 0
+          AND r.status = '0'
+    </select>
+
+    <select id="selectRoleNamesByUserId" resultType="java.lang.String">
+        SELECT r.role_name
+        FROM sys_role r
+                 INNER JOIN sys_user_role ur ON ur.role_id = r.id
+        WHERE ur.user_id = #{userId}
+          AND r.is_deleted = 0
+          AND r.status = '0'
+    </select>
+
+    <!--
+      列表页批量取角色名：一次 IN 查询返回扁平行，服务层再按 userId 分组。
+      比逐行调用 selectRoleNamesByUserId 少 N 次往返。
+      调用方保证 userIds 非空。
+    -->
+    <select id="selectRoleNamesByUserIds" resultType="com.erp.system.domain.vo.UserRoleNameVo">
+        SELECT ur.user_id AS userId,
+               r.role_name AS roleName
+        FROM sys_role r
+                 INNER JOIN sys_user_role ur ON ur.role_id = r.id
+        WHERE r.is_deleted = 0
+          AND r.status = '0'
+          AND ur.user_id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>

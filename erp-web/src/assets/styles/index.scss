@@ -1,0 +1,177 @@
+@use './variables.scss' as *;
+@use './sidebar.scss';
+
+// 把 SCSS 变量暴露成 CSS 自定义属性，组件里可以直接 var(--xxx)，不必再 @use 变量文件
+:root {
+  --header-height: #{$header-height};
+  --sidebar-width: #{$sidebar-width};
+  --sidebar-collapsed-width: #{$sidebar-collapsed-width};
+  --tags-view-height: #{$tags-view-height};
+  --content-gutter: #{$content-gutter};
+  --header-bg: #{$header-bg};
+  --header-text: #{$header-text};
+  --header-text-muted: #{$header-text-muted};
+  --content-bg: #{$content-bg};
+  --surface-bg: #{$surface-bg};
+  --border-color: #{$border-color};
+  --table-header-bg: #{$table-header-bg};
+  --primary-color: #{$primary-color};
+  --radius-card: #{$radius-card};
+  --radius-control: #{$radius-control};
+  --page-max-width: #{$page-max-width};
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  font-size: 14px;
+  color: #303133;
+  background-color: $content-bg;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: $primary-color;
+  text-decoration: none;
+}
+
+// ---------------------------------------------------------------------------
+// 通用页面骨架：搜索栏 / 工具条 / 表格
+//
+// 内边距统一由 layout 的 AppMain 提供，页面自己不再加 padding ——
+// 否则新老页面会各有一套边距，切换时能看出跳动。
+// ---------------------------------------------------------------------------
+.app-container {
+  padding: 0;
+}
+
+// 卡片页（单据 / 主数据）的通用外壳：
+//   宽度自适应（小屏铺满，大屏居中限制在 $page-max-width）
+//   内边距与表单行距比 Element 默认更紧凑
+.bill-card {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+
+  .el-card__body {
+    padding: 14px 16px;
+  }
+
+  .el-form-item {
+    margin-bottom: 14px;
+  }
+
+  .el-form-item__label {
+    font-size: 13px;
+  }
+}
+
+.search-card {
+  margin-bottom: 12px;
+
+  .el-card__body {
+    padding: 16px 16px 4px;
+  }
+
+  .el-form-item {
+    margin-bottom: 12px;
+  }
+}
+
+// 紧凑查询区：单据列表页使用（表单控件 size="small" + 更小的内外边距）
+.search-card.is-compact {
+  margin-bottom: 10px;
+
+  .el-card__body {
+    padding: 12px 12px 0;
+  }
+
+  .el-form-item {
+    margin-bottom: 8px;
+  }
+
+  .el-form-item__label {
+    margin-right: 8px;
+    font-size: 13px;
+  }
+}
+
+.table-card {
+  .el-card__body {
+    padding: 12px 16px 16px;
+  }
+}
+
+// 表格上方的一行操作按钮
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .toolbar-left {
+    display: flex;
+    gap: 8px;
+    margin-right: auto;
+    flex-wrap: wrap;
+  }
+}
+
+// 分页统一右对齐
+.pagination-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+// 明细编辑表格：单元格内直接放 el-input-number 时去掉多余的内边距
+.detail-table {
+  .el-form-item {
+    margin-bottom: 0;
+  }
+
+  .el-table__cell {
+    padding: 6px 0;
+  }
+}
+
+// 金额右对齐，读数字更舒服
+.cell-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+// AI 助手抽屉：Element 的 drawer body 默认有 20px 内边距，
+// 面板自己是全高布局（头部/滚动区/输入区），这层内边距要去掉。
+// 写成全局规则而不是 scoped：drawer 会被 teleport 到 body，scoped 选择器够不到它。
+.ai-assistant-drawer .el-drawer__body {
+  padding: 0;
+  overflow: hidden;
+}
+
+.text-muted {
+  color: #909399;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
+.mt-8 {
+  margin-top: 8px;
+}

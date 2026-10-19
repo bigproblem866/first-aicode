@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.erp</groupId>
+        <artifactId>erp-modules</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>erp-inventory</artifactId>
+    <packaging>jar</packaging>
+    <name>erp-inventory</name>
+    <description>库存管理：库存台账、出入库单、库存流水。
+                 依赖 erp-mdm 是为了展示「跨模块调用」的正确做法：
+                 只注入 mdm 的 api 包接口，不碰 mdm 的 mapper 与表。</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-framework</artifactId>
+        </dependency>
+        <!-- 跨模块依赖：只为拿到物料/仓库信息，且只用其 api 包 -->
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-mdm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

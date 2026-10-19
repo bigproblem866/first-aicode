@@ -1,0 +1,30 @@
+# =============================================================================
+# 本地开发覆盖配置（用 --spring.profiles.active=local 生效，默认已开启）
+# 只放「本地开发才需要」的东西，不要放任何共享配置。
+# =============================================================================
+
+spring:
+  # 打印 Spring Boot 启动 banner，把启动日志和业务日志明显隔开
+  main:
+    banner-mode: console
+
+mybatis-plus:
+  configuration:
+    # 这里刻意不配 log-impl: StdOutImpl。
+    # 原因：StdOutImpl 用 System.out 直出，绕过 logback，日志文件里看不到、也没有级别控制；
+    # 而主配置已经设了 logging.level.com.erp=debug，MyBatis 的 Mapper 日志（logger 名就是
+    # com.erp.mdm.mapper.MaterialMapper）会走 logback 正常打印 SQL。
+    # 两个一起配的结果是每条 SQL 打两遍，很容易被误认为"执行了两次"。
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+logging:
+  file:
+    # 显式指定日志目录。不指定的话，从 IDEA 启动和从命令行启动会写到两个不同的
+    # logs 目录，排查问题时经常以为"日志没了"。这里统一到工程根目录的 logs/
+    # （滚动策略在 logback-spring.xml 里配置，logging.logback.rollingpolicy.* 对本工程无效）
+    name: ./logs/erp-server.log
+  level:
+    # 本地把安全相关的调试信息打开：排查 401/403 时非常有用
+    org.springframework.security: info
+    # 关掉启动时的 Nacos/Cloud 之类噪音（本工程没引，保留以防将来加）
+    com.alibaba.nacos: warn

@@ -1,0 +1,25 @@
+{
+  "name": "erp-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ERP 管理系统前端（Vue3 + Vite + Element Plus + Pinia）",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 3000"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.20.0",
+    "element-plus": "^2.14.7",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.44",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "sass": "^1.105.2",
+    "vite": "^6.4.4"
+  }
+}

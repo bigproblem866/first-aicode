@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.erp</groupId>
+        <artifactId>erp-server</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>erp-admin</artifactId>
+    <packaging>jar</packaging>
+    <name>erp-admin</name>
+    <description>启动模块：聚合全部业务模块，承载配置文件与建表脚本，是整个工程唯一的可执行 jar。
+                 启动类放在 com.erp 包下，组件扫描才能覆盖 com.erp.system / com.erp.mdm 等所有业务包。</description>
+
+    <dependencies>
+        <!-- 业务模块。新增模块时在这里加一行即可。 -->
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-mdm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-inventory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-purchase</artifactId>
+        </dependency>
+
+        <!-- MySQL 驱动。版本由 Spring Boot BOM 仲裁，不要手写版本号 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Flyway 管表结构。flyway-mysql 是 MySQL 专用支持包，
+             只引 flyway-core 启动会报 "Unsupported Database: MySQL"。 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>erp-server</finalName>
+        <plugins>
+            <!-- 只有启动模块需要 repackage（打成可执行 fat jar）。
+                 业务模块是被依赖的库，加了它反而会让 jar 变成不可依赖的 fat jar。 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.erp.ErpApplication</mainClass>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  日志配置。
+
+  为什么自己写一份而不是用 Spring Boot 默认的：
+  默认配置的日志文件路径在多环境下不好控制，容易出现"从 IDEA 启动写到
+  E:\AI-Cladue\AI_MyErp\logs，从命令行启动写到别处"的情况，排查问题时最耽误时间。
+  这里统一成「工程根目录下 logs/」，且路径可通过 logging.file.name 覆盖。
+
+  注意：一旦提供本文件，application.yml 里的 logging.logback.rollingpolicy.* 就不再生效
+  （那些属性只作用于 Spring Boot 的默认配置），所以滚动策略在这里直接写死。
+-->
+<!--
+  没有开 scan="true"：本文件是从打包后的 jar 内加载的，logback 无法把它当成
+  可监听 URL，开启后每次启动都会打印
+  "Missing watchable .xml or .properties files / Watching .xml files requires ..." 两条告警，
+  看着像配置有问题，实际只是噪音。真要改日志级别，改 application.yml 的 logging.level 即可。
+-->
+<configuration>
+
+    <!--
+      ⚠ 这一行不能删。
+
+      %clr（控制台彩色输出）不是 logback 内置的转换词，它由 Spring Boot 通过
+      defaults.xml 里的 conversionRule 注册。自建 logback-spring.xml 时如果不 include
+      这一行，logback 会在启动阶段直接抛
+        "There is no conversion class registered for composite conversion word [clr]"
+      然后整个应用起不来 —— 而且报错发生在日志系统初始化阶段，
+      看起来像日志配置问题，实际是致命的启动失败。
+    -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- 从 Spring 配置里取日志文件路径；取不到则用默认值 -->
+    <springProperty scope="context" name="LOG_FILE" source="logging.file.name"
+                    defaultValue="./logs/erp-server.log"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"
+                    defaultValue="erp-server"/>
+
+    <!-- 彩色控制台格式：IDEA 里能直接看出日志级别 -->
+    <property name="CONSOLE_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([%thread]){magenta} %clr(%logger{40}){cyan} - %msg%n"/>
+    <!-- 文件里不要颜色转义码，否则 grep 出来的内容全是乱码 -->
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{50} - %msg%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 按天+大小滚动，历史文件放在 logs/history/ 下，不会和当前日志混在一起 -->
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 错误日志单独一份，出问题时先看这个文件 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>./logs/erp-error.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>./logs/erp-error.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 降低第三方框架噪音。这些日志在排查框架自身问题时才有用，
+         平时刷屏会淹没业务日志。 -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.mybatis" level="INFO"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+    <logger name="com.baomidou.mybatisplus" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+</configuration>

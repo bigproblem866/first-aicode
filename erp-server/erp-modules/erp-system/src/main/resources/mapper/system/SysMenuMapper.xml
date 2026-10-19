@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.system.mapper.SysMenuMapper">
+
+    <sql id="selectMenuColumns">
+        m.id,
+        m.parent_id,
+        m.menu_name,
+        m.order_num,
+        m.path,
+        m.component,
+        m.menu_type,
+        m.visible,
+        m.status,
+        m.perms,
+        m.icon,
+        m.group_name,
+        m.is_frame,
+        m.is_cache,
+        m.remark,
+        m.create_by,
+        m.create_time,
+        m.update_by,
+        m.update_time
+    </sql>
+
+    <!--
+      用户权限串。
+      只取 status='0' 的菜单和角色：停用的菜单/角色不应再授予权限，
+      这是"停用某菜单"能立即生效的关键（否则只能改代码或删菜单）。
+    -->
+    <select id="selectPermsByUserId" resultType="java.lang.String">
+        SELECT DISTINCT m.perms
+        FROM sys_menu m
+        INNER JOIN sys_role_menu rm ON rm.menu_id = m.id
+        INNER JOIN sys_user_role ur ON ur.role_id = rm.role_id
+        INNER JOIN sys_role r ON r.id = ur.role_id
+        WHERE m.is_deleted = 0
+          AND m.status = '0'
+          AND m.perms IS NOT NULL
+          AND m.perms &lt;&gt; ''
+          AND r.is_deleted = 0
+          AND r.status = '0'
+          AND ur.user_id = #{userId}
+    </select>
+
+    <!-- 用户可见菜单（M 目录 + C 菜单），按钮 F 不参与路由构建 -->
+    <select id="selectMenuTreeByUserId" resultType="com.erp.system.domain.SysMenu">
+        SELECT DISTINCT
+        <include refid="selectMenuColumns"/>
+        FROM sys_menu m
+        INNER JOIN sys_role_menu rm ON rm.menu_id = m.id
+        INNER JOIN sys_user_role ur ON ur.role_id = rm.role_id
+        INNER JOIN sys_role r ON r.id = ur.role_id
+        WHERE m.is_deleted = 0
+          AND m.menu_type IN ('M', 'C')
+          AND m.status = '0'
+          AND r.is_deleted = 0
+          AND r.status = '0'
+          AND ur.user_id = #{userId}
+        ORDER BY m.parent_id, m.order_num
+    </select>
+
+    <select id="selectMenuTreeAll" resultType="com.erp.system.domain.SysMenu">
+        SELECT
+        <include refid="selectMenuColumns"/>
+        FROM sys_menu m
+        WHERE m.is_deleted = 0
+          AND m.menu_type IN ('M', 'C')
+          AND m.status = '0'
+        ORDER BY m.parent_id, m.order_num
+    </select>
+
+    <select id="selectMenuIdsByRoleId" resultType="java.lang.Long">
+        SELECT rm.menu_id
+        FROM sys_role_menu rm
+        WHERE rm.role_id = #{roleId}
+    </select>
+
+</mapper>

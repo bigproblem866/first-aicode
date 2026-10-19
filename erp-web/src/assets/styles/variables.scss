@@ -1,0 +1,57 @@
+// ---------------------------------------------------------------------------
+// 设计令牌：布局尺寸、配色、圆角
+// 只放变量、不产出任何 CSS 规则：这样任何文件 @use 它都不会产生重复样式。
+// 需要被 JS / 模板读取的值，统一在 index.scss 里映射成 CSS 自定义属性（--xxx）。
+//
+// 风格参考：用友 BIP 旗舰版的结构惯例
+//   全局顶栏（全宽）→ 浅色侧栏 → 页签 → 卡片化内容区（页头带标题与操作）→ 极简表格
+//
+// ⚠ 注意：本机没有 BIP 的界面素材，这套取值是按结构惯例推的，不是像素级还原。
+//   以后拿到参考图，优先改这个文件 —— 全站观感都从这里派生。
+// ---------------------------------------------------------------------------
+
+// 尺寸
+// 尺寸：参考金蝶 KDesign 的布局令牌
+//   Header 52px / Sider 展开 200px、折叠 50px / 内容区 16px 栅格边距
+$header-height: 52px;               // 全局顶栏（横跨整宽，在侧栏之上）
+$sidebar-width: 265px;              // 对齐参考图：侧栏更宽，菜单行高 50px
+$sidebar-collapsed-width: 50px;
+$sidebar-item-height: 50px;
+$tags-view-height: 40px;
+$content-gutter: 16px;
+
+// 侧边栏：浅色。深色侧栏是若依那套观感，BIP 用的是白底 + 浅色选中态
+$sidebar-bg: #ffffff;
+$sidebar-text: #4b5563;
+$sidebar-hover-bg: #f5f7fa;
+$sidebar-active-bg: #fbe6e8;
+$sidebar-active-text: #d9001b;
+$sidebar-sub-bg: #ffffff;
+$sidebar-border: #eef0f3;
+
+// 全局顶栏：白底 + 红色品牌标记，与侧栏 / 搜索栏 / 内容区共用同一套红白主题。
+// 参考图里顶栏是深蓝横条；这里刻意不跟随，红色只用在品牌标记与强调项上，
+// 大面积深色会让「红白」变成「深红 + 白」两张皮。
+$header-bg: #ffffff;
+$header-text: #1f2937;
+$header-text-muted: #6b7280;
+
+// 内容区（KDesign 的 body/footer 底色）
+$content-bg: #f2f2f2;
+$surface-bg: #ffffff;
+$border-color: #e8eaed;
+$table-header-bg: #f7f8fa;
+
+// 主题色：红白主题（用友红一系）
+//
+// ⚠ 红作主色后，它和 Element 的危险色（#f56c6c）会挨得比较近：
+//   「确定」和「删除」都是红系按钮。要靠深浅区分 ——
+//   主色深、危险色浅。若要更明显的区分，把 --el-color-danger 调深或改成橙红。
+$primary-color: #d9001b;
+
+// 圆角：卡片大、控件小，这是现代 ERP 的常见比例
+$radius-card: 8px;
+$radius-control: 4px;
+
+// 卡片页（单据 / 主数据）的内容最大宽度：小屏自适应铺满，大屏居中避免过宽
+$page-max-width: 1400px;

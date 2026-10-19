@@ -1,0 +1,142 @@
+# =============================================================================
+# ERP 主配置（提交到 git）
+# -----------------------------------------------------------------------------
+# 机密（生产数据库密码、JWT 密钥）一律用环境变量覆盖，不写死在这里：
+#   DB_PASSWORD     数据库密码
+#   ERP_JWT_SECRET  JWT 签名密钥（≥32 字节）
+# 本地开发用默认值即可（账号由 sql/00_bootstrap.sql 创建）。
+# =============================================================================
+
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+  # 优雅停机：收到停止信号后等在途请求处理完再退出，避免打断正在提交的事务
+  shutdown: graceful
+  tomcat:
+    # 单体应用，适当放宽连接数；本地开发给 200 足够
+    threads:
+      max: 200
+
+spring:
+  application:
+    name: erp-server
+  profiles:
+    active: local
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 连接串里这几个参数都不能少，少一个就可能连不上：
+    #   useSSL=false + allowPublicKeyRetrieval=true  → MySQL 8 默认 caching_sha2_password，
+    #       非 SSL 连接下不带这两个参数会直接报 "Public Key Retrieval is not allowed"
+    #   serverTimezone=Asia/Shanghai                  → 不指定时按 JVM 默认解析，时间会差 8 小时
+    #   rewriteBatchedStatements=true                 → 批量插入性能差一个数量级
+    url: jdbc:mysql://127.0.0.1:3306/erp_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    username: ${DB_USER:erp}
+    password: ${DB_PASSWORD:Erp@123456}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      # 连接泄漏检测：借出超过 10 分钟未归还就打印堆栈，开发期能早发现没关连接的代码
+      leak-detection-threshold: 600000
+
+  flyway:
+    enabled: true
+    # 建表脚本位置。V 开头的是版本脚本（只执行一次），R 开头的是可重复脚本（内容变了自动重跑）
+    locations: classpath:db/migration
+    encoding: UTF-8
+    # 允许对已有数据的库启用 Flyway（第一次会建 flyway_schema_history 基线）
+    baseline-on-migrate: true
+    # 禁止 flyway:clean（会删库），防手滑
+    clean-disabled: true
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    # 序列化时保留 null 字段：前端表格列依赖字段存在来判断列宽，null 被去掉反而要额外判空
+    default-property-inclusion: always
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+mybatis-plus:
+  # classpath*: 才能扫到各业务模块 jar 内部的 XML；
+  # 只写 classpath: 只会扫到启动模块自己的 resources，是所有 mapper binding 报错里最常见的一个坑
+  mapper-locations: classpath*:mapper/**/*.xml
+  #
+  # ⚠ 这里刻意不配 type-aliases-package。
+  #
+  # 它会把指定包下的类按【简单类名】注册成 MyBatis 别名，于是两个不同模块里的同名类
+  # 会直接让应用启动失败：
+  #   The alias 'TreeSelectVo' is already mapped to the value 'com.erp.mdm.domain.vo.TreeSelectVo'
+  # 这个错误只在启动时才暴露，而且报在 SqlSessionFactory 创建阶段，看起来像 MyBatis 配置问题。
+  #
+  # 本工程所有 XML 的 resultType 都写全限定名，本来就不需要别名。
+  # 将来要写别名也用 <typeAlias> 显式声明，别开全局扫描。
+  configuration:
+    map-underscore-to-camel-case: true
+    # 关闭 MyBatis 二级缓存：本工程用 Caffeine 做应用级缓存，两套缓存叠加会出现数据不一致
+    cache-enabled: false
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      # 逻辑删除。必须与 BaseEntity 上的 @TableLogic 一致
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ============================ 本工程自定义配置 ============================
+erp:
+  jwt:
+    # ⚠ 开发默认值，生产必须用环境变量 ERP_JWT_SECRET 覆盖
+    secret: ${ERP_JWT_SECRET:erp-dev-only-jwt-secret-change-me-32bytes-min}
+    # 12 小时，覆盖一个工作日；到期前 20 分钟内有请求会自动续期
+    expire-minutes: 720
+    refresh-threshold-minutes: 20
+  security:
+    # 免登录路径。注意这里写的是「应用内真实路径」，含 /api 前缀
+    permit-urls:
+      - /api/auth/login
+      - /api/health
+      # Swagger UI 相关。接口文档页面本身不含业务数据，放行是为了能在浏览器里直接打开；
+      # 它调用的 /v3/api-docs 也是白名单里的，但真正的业务接口仍然需要 Token
+      - /swagger-ui.html
+      - /swagger-ui/**
+      - /v3/api-docs/**
+      - /webjars/**
+      - /favicon.ico
+      - /error
+  init:
+    # 启动时若无 admin 账号则自动创建（幂等）。生产环境请置为 false
+    enabled: true
+    admin-username: admin
+    admin-password: ${ERP_ADMIN_PASSWORD:123456}
+
+# ============================ 接口文档 ============================
+# Swagger UI: http://localhost:8080/swagger-ui.html
+# （曾用 knife4j，因与 Spring Boot 3.5 不兼容已移除，见 erp-framework/pom.xml 说明）
+springdoc:
+  api-docs:
+    enabled: true
+    # 按模块分好组后，用 /v3/api-docs/{group} 访问；
+    # GroupedOpenApi 的 Bean 定义在 OpenApiConfig 里
+  swagger-ui:
+    path: /swagger-ui.html
+    # 按 group 名排序，界面上模块顺序稳定，不会每次刷新都变
+    groups-order: asc
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+logging:
+  level:
+    root: info
+    com.erp: debug

@@ -1,0 +1,63 @@
+// ---------------------------------------------------------------------------
+// Element Plus 主题覆盖
+//
+// 只覆盖 CSS 自定义属性，不重编译 element-plus 主题 —— 改十几行就能让全站
+// 组件（按钮 / 表格 / 输入框 / 分页 / 弹窗）一起换观感，这是最省力的换肤手段。
+//
+// ⚠ 变量名必须与 element-plus/theme-chalk/index.css 里真实存在的名字逐字一致。
+//   写错**不会报错**，只是静默不生效（本工程已经踩过多次"名字不一致导致静默失效"）。
+//   核对办法：
+//     grep -o -- "--el-table-[a-z-]*" node_modules/element-plus/theme-chalk/index.css | sort -u
+// ---------------------------------------------------------------------------
+
+:root {
+  // 主色：必须连同 Element 派生的浅色/深色一起换。
+  // 只改 --el-color-primary 的话，按钮 hover、禁用态、浅色底仍是旧蓝，
+  // 现象是"鼠标一放上去颜色就跳回原来的"。
+  --el-color-primary: #d9001b;
+  --el-color-primary-light-3: #e44d5f;
+  --el-color-primary-light-5: #ec808d;
+  --el-color-primary-light-7: #f4b3bb;
+  --el-color-primary-light-8: #f8ccd1;
+  --el-color-primary-light-9: #fbe6e8;
+  --el-color-primary-dark-2: #ae0016;
+
+  // 圆角：控件 4px（卡片 8px 见下方 card / dialog）
+  --el-border-radius-base: 4px;
+
+  // 菜单折叠宽度 = --el-menu-icon-width + 2 × --el-menu-base-level-padding
+  // 默认 24 + 20×2 = 64px；这里调成 24 + 13×2 = 50px，对齐 KDesign 的折叠宽度。
+  // 只改容器宽度不改这两个令牌的话，菜单仍是 64px，会在 50px 的侧栏里被裁掉。
+  --el-menu-icon-width: 24px;
+  --el-menu-base-level-padding: 13px;
+
+  // 表格：表头浅灰、边框极淡、悬停极浅红（跟随红白主题，别留旧的蓝底）
+  --el-table-header-bg-color: #f7f8fa;
+  --el-table-header-text-color: #5c6270;
+  --el-table-border-color: #eef0f3;
+  --el-table-row-hover-bg-color: #fdf4f5;
+  --el-table-text-color: #303133;
+  --el-table-bg-color: #ffffff;
+  --el-table-tr-bg-color: #ffffff;
+
+  // 卡片 / 弹窗
+  --el-card-border-color: #eef0f3;
+  --el-card-border-radius: 8px;
+  --el-dialog-border-radius: 8px;
+}
+
+// 表格字号比正文小一号，信息密度更接近 ERP 的观感。
+// Element 没有提供表格字号的变量（已核实 --el-table-font-size 不存在），只能直接写规则。
+.el-table {
+  font-size: 13px;
+}
+
+// 表头不要用默认的加粗，浅灰底 + 中等字重更干净
+.el-table th.el-table__cell {
+  font-weight: 500;
+}
+
+// BIP 的按钮是紧凑的方形小圆角，不是 Element 默认的胶囊感
+.el-button {
+  font-weight: 400;
+}

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.erp</groupId>
+        <artifactId>erp-server</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>erp-framework</artifactId>
+    <packaging>jar</packaging>
+    <name>erp-framework</name>
+    <description>基础设施层：MyBatis-Plus 配置、Spring Security + JWT、全局异常、缓存、接口文档。
+                 业务模块统一依赖本模块，不直接引 Spring Security / MyBatis-Plus 的 starter。</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.erp</groupId>
+            <artifactId>erp-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+
+        <!-- 缓存：本机没装 Redis，单体进程内用 Caffeine（纯 Java，零外部依赖）。
+             将来要换 Redis，只需替换 CaffeineCacheConfig 一个类。 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+        </dependency>
+        <!-- 分页必需，见父 POM 注释 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- 接口文档：直接用 springdoc 官方的 Swagger UI。
+             <p>
+             曾经用 knife4j 4.5.0（中文界面更好看），实测不可行：
+             knife4j 是按旧版 springdoc 编译的，无论怎么配都会出现
+             NoSuchMethodError: SpringDocConfigProperties.getGroupConfigs()。
+             试过的两种组合都失败：
+               1) 用 knife4j 传递进来的 springdoc —— 版本太旧，与 Boot 3.5 不匹配
+               2) 排除它的 springdoc、换 2.8.17 —— knife4j 自己的代码找不到那个方法，访问
+                  /v3/api-docs/* 直接 500
+             而 knife4j 在 Maven Central 上最新就是 4.5.0（没有兼容 springdoc 2.8 的版本）。
+             结论：一个打不开的接口文档比朴素但能用的更糟，改用 springdoc 原生 Swagger UI，
+             访问 http://localhost:8080/swagger-ui.html。
+             将来 knife4j 出了兼容版本，把它的依赖加回来即可，本文件与 OpenApiConfig 都不用改。 -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

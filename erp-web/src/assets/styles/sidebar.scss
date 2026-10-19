@@ -1,0 +1,120 @@
+@use './variables.scss' as *;
+
+// ---------------------------------------------------------------------------
+// 侧边栏
+//
+// 布局对齐参考图（金蝶 AI 套件）：
+//   - 宽 265px，菜单行高 50px、字号 14px
+//   - 选中态是**通栏**浅色底（不是内缩的圆角胶囊），没有左侧指示条
+//   - 二级目录标题右侧有「工作台」入口
+//
+// 侧栏现在渲染在顶栏菜单图标弹出的浮层里（MenuLauncher.vue），
+// 不再常驻占位；浮层自己带阴影，所以这里不需要右边框。
+// ---------------------------------------------------------------------------
+.sidebar-container {
+  height: 100%;
+  overflow: hidden;
+  background-color: $sidebar-bg;
+
+  .el-scrollbar {
+    height: 100%;
+  }
+
+  .el-menu {
+    width: 100%;
+    padding: 6px 0;
+    border: none;
+    background-color: transparent;
+    // 子级相对父级的缩进；默认 20px，参考图更深一些
+    --el-menu-level-padding: 28px;
+  }
+
+  .el-menu--collapse {
+    padding: 8px 0;
+
+    .menu-badge {
+      display: none;
+    }
+  }
+
+  // 展开态下顶部留出一点边距，和参考图一致
+  .el-menu:not(.el-menu--collapse) > .el-menu-item,
+  .el-menu:not(.el-menu--collapse) > .el-sub-menu > .el-sub-menu__title {
+    padding-left: 20px !important;
+  }
+
+  // 菜单行
+  .el-menu-item,
+  .el-sub-menu__title {
+    height: $sidebar-item-height;
+    line-height: $sidebar-item-height;
+    font-size: 14px;
+    color: $sidebar-text;
+    // 参考图是通栏高亮，所以不做圆角
+    border-radius: 0;
+
+    .el-icon {
+      margin-right: 10px;
+      color: #8a94a6;
+    }
+
+    &:hover {
+      background-color: $sidebar-hover-bg !important;
+      color: $sidebar-active-text;
+
+      .el-icon {
+        color: $sidebar-active-text;
+      }
+    }
+  }
+
+  // 通栏选中态：浅色底 + 主色文字
+  .el-menu-item.is-active {
+    font-weight: 500;
+    color: $sidebar-active-text;
+    background-color: $sidebar-active-bg !important;
+
+    .el-icon {
+      color: $sidebar-active-text;
+    }
+  }
+
+  .el-sub-menu.is-active > .el-sub-menu__title {
+    color: $sidebar-active-text;
+
+    .el-icon {
+      color: $sidebar-active-text;
+    }
+  }
+
+  .el-sub-menu .el-menu {
+    background-color: $sidebar-sub-bg;
+  }
+
+  // 二级目录的「工作台」入口（参考图里库存管理右侧那个标签）
+  // 默认隐藏，悬停该行时出现；当前所在目录则常亮（实心）
+  .menu-badge {
+    margin-left: auto;
+    padding: 1px 8px;
+    font-size: 12px;
+    line-height: 18px;
+    font-weight: 400;
+    color: $sidebar-active-text;
+    background-color: $sidebar-active-bg;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+
+    &.is-current {
+      opacity: 1;
+      color: #ffffff;
+      background-color: $sidebar-active-text;
+    }
+  }
+
+  .el-menu-item:hover .menu-badge,
+  .el-menu-item.is-active .menu-badge {
+    opacity: 1;
+  }
+}

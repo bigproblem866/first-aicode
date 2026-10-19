@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.erp</groupId>
+        <artifactId>erp-server</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>erp-common</artifactId>
+    <packaging>jar</packaging>
+    <name>erp-common</name>
+    <description>公共层：统一返回、分页、基础实体、异常、工具类。
+                 本模块刻意不依赖 Spring Web / Security，保证任何模块都能安全引用而不产生环。</description>
+
+    <dependencies>
+        <!-- MyBatis-Plus 的 extension（含 Page 分页对象、各种 InnerInterceptor、
+             MetaObjectHandler 接口）+ 其传递的 core/annotation。
+             只用 extension 而不是整个 starter：common 层不需要自动装配。 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-extension</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+
+        <!-- BaseEntity 上的 @JsonFormat（时间格式统一在 framework 的 JacksonConfig 里再兜一层） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
