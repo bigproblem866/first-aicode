@@ -84,6 +84,15 @@ export const useUserStore = defineStore('user', {
       this.permissions = []
       this.infoLoaded = false
       removeToken()
+
+      // 清掉欢迎弹窗的会话标记：退出后重新登录要再弹一次
+      try {
+        Object.keys(sessionStorage)
+          .filter((key) => key.startsWith('erp_welcome_shown_'))
+          .forEach((key) => sessionStorage.removeItem(key))
+      } catch (e) {
+        // sessionStorage 不可用时忽略
+      }
     }
   }
 })

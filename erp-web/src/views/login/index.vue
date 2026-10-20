@@ -3,10 +3,13 @@
     <!-- 左：品牌区 -->
     <aside class="login-brand">
       <div class="brand-inner">
-        <div class="brand-logo">E</div>
-        <h1 class="brand-title">ERP 管理系统</h1>
-        <p class="brand-desc">主数据 · 库存 · 采购，一套系统管到底</p>
+        <div class="brand-logo">爱</div>
+        <p class="brand-eyebrow">AIYONG ERP</p>
+        <h1 class="brand-title">爱用</h1>
+        <div class="brand-rule"></div>
+        <h2 class="brand-desc">一套系统管到底</h2>
       </div>
+      <p class="brand-foot">© 2026 爱用 · ERP 管理系统</p>
     </aside>
 
     <!-- 右：登录表单 -->
@@ -110,45 +113,111 @@ async function handleLogin() {
 
 /* ---------- 左侧品牌区 ---------- */
 .login-brand {
+  position: relative;
   flex: 0 0 46%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px;
-  background: linear-gradient(160deg, #7a0010 0%, #b30016 55%, #d9001b 100%);
+  overflow: hidden;
+  background-color: #b30016;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.14), transparent 42%),
+    radial-gradient(circle at 84% 80%, rgba(255, 255, 255, 0.1), transparent 46%),
+    linear-gradient(155deg, #7a0010 0%, #b30016 55%, #d9001b 100%);
+}
+
+/* 装饰圆环：填补大面积留白，同时不抢文字注意力 */
+.login-brand::before,
+.login-brand::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.login-brand::before {
+  top: -190px;
+  right: -170px;
+  width: 520px;
+  height: 520px;
+}
+
+.login-brand::after {
+  bottom: -140px;
+  left: -110px;
+  width: 340px;
+  height: 340px;
+  border-color: rgba(255, 255, 255, 0.09);
 }
 
 .brand-inner {
-  max-width: 380px;
+  position: relative;
+  z-index: 1;
+  max-width: 400px;
   color: #ffffff;
+  /* 各行字数不同，居中对齐比强行左对齐更自然 */
+  text-align: center;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
-  margin-bottom: 28px;
-  font-size: 26px;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 32px;
+  font-size: 24px;
   font-weight: 700;
   color: #d9001b;
   background-color: #ffffff;
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgba(60, 0, 8, 0.28);
+}
+
+.brand-eyebrow {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .brand-title {
-  margin: 0 0 12px;
-  font-size: 30px;
+  margin: 0;
+  font-size: 44px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+}
+
+.brand-rule {
+  width: 40px;
+  height: 2px;
+  margin: 22px auto 16px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
 }
 
 .brand-desc {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.7;
+  letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.78);
+}
+
+.brand-foot {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ---------- 右侧表单区 ---------- */

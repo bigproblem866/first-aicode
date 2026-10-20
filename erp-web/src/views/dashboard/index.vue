@@ -23,30 +23,17 @@
       </el-col>
     </el-row>
 
-    <el-card class="welcome-card" shadow="never">
-      <template #header>
-        <span>欢迎使用</span>
-      </template>
-      <div class="welcome">
-        <p>你好，{{ userStore.nickName }}。当前角色：{{ roleText }}</p>
-        <p class="text-muted">
-          左侧菜单由后端 <code>/api/auth/routers</code> 动态下发，你看到的菜单就是当前账号真正有权限的部分。
-        </p>
-      </div>
-    </el-card>
+    <WelcomePopup />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useUserStore } from '@/store/modules/user'
+import WelcomePopup from '@/components/WelcomePopup/index.vue'
 
 /**
  * 首页。这里只放占位统计卡片 —— 真正的统计口径要等业务接口出来再定，
  * 现在写死数字容易让人误以为它是准的，所以统一显示 "—"。
  */
-const userStore = useUserStore()
-
 const cards = [
   { title: '物料总数', value: '—', icon: 'Goods', color: '#d9001b', bg: '#fbe6e8' },
   { title: '客户数量', value: '—', icon: 'Avatar', color: '#67c23a', bg: '#f0f9eb' },
@@ -59,8 +46,6 @@ const cards = [
   },
   { title: '待办单据', value: '—', icon: 'Tickets', color: '#f56c6c', bg: '#fef0f0' }
 ]
-
-const roleText = computed(() => (userStore.roles.length ? userStore.roles.join('、') : '无'))
 </script>
 
 <style scoped>
@@ -96,9 +81,5 @@ const roleText = computed(() => (userStore.roles.length ? userStore.roles.join('
   font-weight: 600;
   line-height: 1.2;
   color: #1f2937;
-}
-
-.welcome p {
-  margin: 6px 0;
 }
 </style>
