@@ -28,6 +28,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePermissionStore } from '@/store/modules/permission'
+import { collectMenuFunctions, findMenuByPath, joinPath } from '@/utils/menu'
 
 /**
  * 功能导航页（/module/:key）。
@@ -43,49 +44,14 @@ import { usePermissionStore } from '@/store/modules/permission'
 const route = useRoute()
 const permissionStore = usePermissionStore()
 
-function joinPath(base, path) {
-  if (!path) return base || '/'
-  if (/^https?:\/\//.test(path)) return path
-  if (path.startsWith('/')) return path
-  if (!base) return `/${path}`
-  return `${base}/${path}`.replace(/\/{2,}/g, '/')
-}
-
-function collectLeaves(routes, base) {
-  const out = []
-  for (const item of routes || []) {
-    if (item.hidden) continue
-    const full = joinPath(base, item.path)
-    const children = (item.children || []).filter((c) => !c.hidden)
-    if (children.length) {
-      out.push(...collectLeaves(children, full))
-    } else if (item.meta && item.meta.title) {
-      out.push({ path: full, title: item.meta.title })
-    }
-  }
-  return out
-}
-
 /**
  * 在整棵已授权路由树里按完整路径查找（支持 /supply/inventory 这种多级 key）。
- *
- * ⚠ 必须同时返回 fullPath：二级目录的 path 是**相对值**（inventory / purchase），
- *   只返回节点本身的话，调用方拿它当根路径会拼出 /purchase/order 这种错误地址。
+ * findMenuByPath 同时返回 fullPath —— 二级目录的 path 是相对值，
+ * 只拿节点自身 path 当根路径会拼出 /purchase/order 这种错误地址。
  */
-function findRouteByPath(routes, base, target) {
-  for (const item of routes || []) {
-    if (item.hidden) continue
-    const full = joinPath(base, item.path)
-    if (full === target) return { route: item, fullPath: full }
-    const found = findRouteByPath(item.children, full, target)
-    if (found) return found
-  }
-  return null
-}
-
 const moduleMatch = computed(() => {
   const key = String(route.params.key || '').replace(/^\//, '')
-  return findRouteByPath(permissionStore.sidebarRouters, '', `/${key}`)
+  return findMenuByPath(permissionStore.sidebarRouters, '', `/${key}`)
 })
 
 const moduleRoute = computed(() => (moduleMatch.value ? moduleMatch.value.route : null))
@@ -116,7 +82,7 @@ const groups = computed(() => {
       directoryGroups.push({
         key: child.path,
         title: (child.meta && child.meta.title) || '',
-        items: collectLeaves(children, full)
+        items: collectMenuFunctions(children, full).map(({ path, title }) => ({ path, title }))
       })
     } else if (child.meta && child.meta.title) {
       // 功能：按 group_name 分区；为空时回退到所属目录名
